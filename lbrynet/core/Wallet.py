@@ -556,12 +556,20 @@ class Wallet(object):
 
     @defer.inlineCallbacks
     def update_balance(self):
-        """ obtain balance from lbryum wallet and set self.wallet_balance
-        """
-        balance = yield self._update_balance()
-        if self.wallet_balance != balance:
-            log.debug("Got a new balance: %s", balance)
-        self.wallet_balance = balance
+
+        if self.stopped:
+            log.warning("Attempt made to update_balance while the wallet is stopped")
+        else:
+            #if not self.wallet
+            #    log.error("update_balance called with a null wallet")
+
+
+            """ obtain balance from lbryum wallet and set self.wallet_balance
+            """
+            balance = yield self._update_balance()
+            if self.wallet_balance != balance:
+                log.debug("Got a new balance: %s", balance)
+            self.wallet_balance = balance
 
     def get_info_exchanger(self):
         return LBRYcrdAddressRequester(self)
@@ -1202,6 +1210,11 @@ class LBRYumWallet(Wallet):
 
     def get_cmd_runner(self):
         if self._cmd_runner is None:
+            if self.wallet is None:
+                log.error("Setting up _cmd_runner with a null wallet")
+            else:
+                log.info("Setting up _cmd_runner")
+
             self._cmd_runner = Commands(self.config, self.wallet, self.network)
 
         return self._cmd_runner
